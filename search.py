@@ -37,7 +37,7 @@ def levenshtein_pass(s1, s2, diff):
 
 # tolerate max length difference of 1
 def is_near_len(s1, s2):
-    if abs(len(s1) - len(s2)) < MAX_SIMILAR_LENGTH:
+    if abs(len(s1) - len(s2)) <= MAX_SIMILAR_LENGTH:
         return True
     else:
         return False
@@ -94,15 +94,27 @@ log("Searching for \"" + needle + "\"")
 # FIND NEEDLE 
 
 num_results = 0
-i_token = 0
+ht_index = 0
 i_range = len(hay_tokens) - len(needle_tokens)
-for i_token in range(i_range):
-    hay_token = hay_tokens[i_token]
+for ht_index in range(i_range):
+    hay_token = hay_tokens[ht_index]
 
     # if length of words is similar, they are checked for similarity
     if is_near_len(hay_token, needle_tokens[0]):
         matched_words = 0
         total_difference = 0
+
+        # check every word length, if any is not similar do not run Levenshtein at all
+        skip = False
+        j = 1
+        for n_token in needle_tokens[1:]:
+
+            if not is_near_len(n_token, hay_tokens[ht_index + j]):
+                skip = True
+            j += 1
+
+        if skip:
+            continue
 
         # for every word in needle, check if corresponding word from 
         # source is similar, starting from current token
@@ -110,7 +122,7 @@ for i_token in range(i_range):
             token_diff = 0;
 
             # break check if any of the words fails  
-            if not levenshtein_pass(needle_token, hay_tokens[i_token + matched_words], token_diff):
+            if not levenshtein_pass(needle_token, hay_tokens[ht_index + matched_words], token_diff):
                 break
             matched_words += 1
             total_difference += token_diff
@@ -120,7 +132,7 @@ for i_token in range(i_range):
             found_text = ""
             i = 0
             for i in range(matched_words):
-                found_text = found_text + hay_tokens[i_token + i] + " "
+                found_text = found_text + hay_tokens[ht_index + i] + " "
             print(found_text)
             num_results += 1
 
