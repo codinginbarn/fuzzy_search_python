@@ -29,7 +29,7 @@ def levenshtein(s1, s2):
 
 def levenshtein_pass(s1, s2, diff):
     diff = levenshtein(s1, s2)
-    if diff < MAX_LEVENSHTEIN_DISTANCE:
+    if diff <= MAX_LEVENSHTEIN_DISTANCE:
         return True
     else:
         return False
@@ -37,7 +37,7 @@ def levenshtein_pass(s1, s2, diff):
 
 # tolerate max length difference of 1
 def is_near_len(s1, s2):
-    if abs(len(s1) - len(s2)) < MAX_SIMILAR_LENGTH :
+    if abs(len(s1) - len(s2)) < MAX_SIMILAR_LENGTH:
         return True
     else:
         return False
@@ -69,10 +69,10 @@ if args.source is None or args.find is None:
     exit()
 
 if args.mxSimLen is not None:
-    MAX_SIMILAR_LENGTH = args.mxSimLen + 1
+    MAX_SIMILAR_LENGTH = args.mxSimLen
 
 if args.mxLevDist is not None:
-    MAX_LEVENSHTEIN_DISTANCE = args.mxLevDist + 1
+    MAX_LEVENSHTEIN_DISTANCE = args.mxLevDist
 
 
 # PROCESS HAY AND NEEDLE
