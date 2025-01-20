@@ -11,8 +11,8 @@ MAX_LEVENSHTEIN_DISTANCE = 2
 def is_near_len(s1, s2):
     return abs(len(s1) - len(s2)) <= MAX_SIMILAR_LENGTH
 
-def log(message):
-    logging.info(message)
+def log(message, level=logging.INFO):
+    logging.log(level, message)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Fuzzy search within a file using Levenshtein distance.")
@@ -20,24 +20,29 @@ def parse_arguments():
                         help="Max 'similar length' difference - if length difference of words is less or equal to this, words are considered as similar length and should be checked by Levenshtein")
     parser.add_argument('--mxLevDist', '-mld', type=int, default=2,
                         help="Max tolerated Levenshtein distance")
-    parser.add_argument('--source', '-src', required=True, type=str, help="Destination of file to be searched")
+    parser.add_argument('--source', '-src', required=True, type=str, help="Path of the file to be searched")
     parser.add_argument('--find', '-f', required=True, type=str, help="Phrase to find")
     return parser.parse_args()
 
 def read_file(file_path):
-    with open(file_path, "r") as file:
-        return ' ' + re.sub(r"\s+", " ", file.read()) + ' '
+    try:
+        with open(file_path, "r") as file:
+            return ' ' + re.sub(r"\s+", " ", file.read()) + ' '
+    except (OSError, IOError) as e:
+        log(f"Error reading file {file_path}: {e}", logging.ERROR)
+        raise
 
 def validate_path(file_path):
-    # Ensure the provided path is absolute
     if not os.path.isabs(file_path):
         raise ValueError("The file path must be absolute.")
     
-    # Prevent directory traversal attacks
     base_dir = os.path.abspath(os.getcwd())
     target_path = os.path.abspath(file_path)
     if not target_path.startswith(base_dir):
         raise ValueError("Invalid file path: Path traversal detected.")
+    
+    if not os.path.exists(target_path):
+        raise ValueError("The file path does not exist.")
     
     return target_path
 
@@ -78,10 +83,15 @@ def main():
     try:
         validated_path = validate_path(args.source)
     except ValueError as e:
-        log(str(e))
+        log(str(e), logging.ERROR)
         return
 
-    haystack = read_file(validated_path)
+    try:
+        haystack = read_file(validated_path)
+    except Exception as e:
+        log(f"Failed to read file: {e}", logging.ERROR)
+        return
+
     log(f"File size {os.path.getsize(validated_path) / 1_000_000.0:.2f} MB")
     log(f"Searching for \"{args.find}\"")
 
